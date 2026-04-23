@@ -12,19 +12,26 @@ def detect_intent(text):
     text = text.lower().strip()
 
     greetings = ["hi", "hello", "hey", "good morning", "good evening"]
-    intro = ["i am", "my name is", "this is"]
 
+    # greeting
     if text in greetings:
         return "greeting"
 
-    if any(i in text for i in intro):
+    # introduction patterns
+    if (
+        "i am" in text or
+        "i'm" in text or
+        "my name is" in text or
+        "this is" in text or
+        "here" in text  # 👈 catches "kalyan here"
+    ):
         return "intro"
 
-    if len(text.split()) < 2:
+    # if very short → unclear
+    if len(text.split()) <= 2:
         return "unknown"
 
     return "symptom"
-
 
 # 🤖 MAIN FUNCTION
 def get_response(conversation_text):
