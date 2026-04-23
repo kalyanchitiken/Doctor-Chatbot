@@ -7,40 +7,64 @@ load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
-def is_greeting(text):
+# 🧠 INTENT DETECTION
+def detect_intent(text):
+    text = text.lower().strip()
+
     greetings = ["hi", "hello", "hey", "good morning", "good evening"]
-    return any(g == text.lower().strip() for g in greetings)
+    intro = ["i am", "my name is", "this is"]
+
+    if text in greetings:
+        return "greeting"
+
+    if any(i in text for i in intro):
+        return "intro"
+
+    if len(text.split()) < 2:
+        return "unknown"
+
+    return "symptom"
 
 
+# 🤖 MAIN FUNCTION
 def get_response(conversation_text):
 
     last_user_input = conversation_text.split("user:")[-1].strip()
 
-    # 👋 Greeting handling
-    if is_greeting(last_user_input):
+    intent = detect_intent(last_user_input)
+
+    # 👋 GREETING
+    if intent == "greeting":
         return (
             "Hello! 👩‍⚕️ I'm your AI Doctor.\n\n"
-            "How are you feeling today?\n"
-            "Please tell me your symptoms so I can help you."
+            "How are you feeling today?"
         )
 
-    # 🚨 Emergency check
+    # 🙋 INTRODUCTION
+    if intent == "intro":
+        name = last_user_input.replace("i am", "").replace("my name is", "").strip().title()
+        return (
+            f"Nice to meet you {name}! 😊\n\n"
+            "How can I help you today? Are you experiencing any symptoms?"
+        )
+
+    # ❓ UNKNOWN INPUT
+    if intent == "unknown":
+        return (
+            "Could you please describe your symptoms clearly?\n"
+            "For example: fever, headache, stomach pain."
+        )
+
+    # 🚨 EMERGENCY CHECK
     emergency = call_tool_sync("check_emergency", {"symptoms": last_user_input})
 
     if "EMERGENCY" in emergency:
         return emergency
 
-    # 🛑 If not enough info
-    if len(last_user_input.split()) < 2:
-        return (
-            "Could you please describe your symptoms in more detail?\n"
-            "For example: fever, stomach pain, headache, etc."
-        )
-
-    # 🔍 Search dataset
+    # 🔍 SEARCH DISEASES
     diseases = call_tool_sync("search_diseases", {"symptoms": last_user_input})
 
-    # 🧠 Doctor prompt
+    # 🧠 DOCTOR PROMPT
     prompt = f"""
 You are a professional AI doctor.
 
@@ -64,7 +88,7 @@ DO NOT:
 - Ask too many questions
 - Repeat same question
 - Act like a therapist
-- Use dataset for greetings
+- Respond medically to greetings or introductions
 
 Keep response short, clear, and helpful.
 """
