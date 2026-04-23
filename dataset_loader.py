@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv("dataset.csv")
+df = pd.read_csv("dataset_small.csv")
 
 
 def search_by_symptoms(user_input):
